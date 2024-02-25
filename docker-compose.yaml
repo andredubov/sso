@@ -1,0 +1,47 @@
+version: '3.9'
+services:
+  sso:
+    image: sso_microservice
+    container_name: sso_microservice
+    restart: unless-stopped
+    build:
+      context: .
+      dockerfile: ./Dockerfile
+    ports:
+      - ${GRPC_PORT}:${GRPC_PORT}
+    depends_on:
+      postgres:
+        condition: service_healthy
+    env_file:
+      - .env
+    networks:
+      - ssoNet
+  postgres:
+    image: postgres:15.3-alpine3.18
+    container_name: sso_database
+    restart: unless-stopped
+    ports:
+      - ${DB_PORT}:${DB_PORT}
+    env_file:
+      - .env
+    environment:
+      POSTGRES_DB: ${DB_NAME}
+      POSTGRES_USER: ${DB_USER}
+      POSTGRES_PASSWORD: ${DB_PASSWORD}
+    volumes:
+      - ./schema:/docker-entrypoint-initdb.d
+    healthcheck:
+      test:
+        [
+          "CMD-SHELL",
+          "pg_isready -q -U ${DB_USER} -d ${DB_NAME}"
+        ]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+      start_period: 60s
+    networks:
+      - ssoNet
+networks:
+  ssoNet:
+    driver: bridge
