@@ -1,0 +1,12 @@
+env: local
+postgres:
+  host: localhost
+  port: 5432
+grpc:
+  host: localhost
+  port: 8080
+  timeout: 5s
+auth:
+  jwt:
+    accessTokenTTL: 15m
+    refreshTokenTTL: 30m
