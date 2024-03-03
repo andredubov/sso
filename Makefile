@@ -27,8 +27,8 @@ ifneq ($(strip $(IS_SSO_MICROSERVICE_EXITED)),)
 	docker rm $(IS_SSO_MICROSERVICE_EXITED)
 endif
 
-ifneq ($(strip $(IS_TODO_BACKEND_IMAGE)),)
-	docker rmi $(IS_TODO_BACKEND_IMAGE)
+ifneq ($(strip $(IS_SSO_MICROSERVICE_IMAGE)),)
+	docker rmi $(IS_SSO_MICROSERVICE_IMAGE)
 endif
 
 ifneq ($(strip $(IS_SSO_DATABASE_RUNNING)),)
