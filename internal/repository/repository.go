@@ -14,13 +14,21 @@ var (
 	ErrAppNotFound  = errors.New("app not found")
 )
 
+// Users users repository interface
 type Users interface {
 	Add(ctx context.Context, user model.User) (string, error)
 	GetByCredentials(ctx context.Context, email, password string) (model.User, error)
 	IsAdmin(ctx context.Context, userID string) (bool, error)
 }
 
+// Apps apps repository interface
 type Apps interface {
 	Add(ctx context.Context, app model.App) (string, error)
 	GetByID(ctx context.Context, appID string) (model.App, error)
+}
+
+// Repository repository entity
+type Repository struct {
+	Users Users
+	Apps  Apps
 }
