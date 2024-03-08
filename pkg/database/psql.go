@@ -8,7 +8,7 @@ import (
 	_ "github.com/lib/pq"
 )
 
-func NewPostgresConnection(cfg config.Config) (*sqlx.DB, error) {
+func NewPostgresConnection(cfg *config.Config) (*sqlx.DB, error) {
 
 	db, err := sqlx.Open("postgres", fmt.Sprintf("host=%s port=%d user=%s dbname=%s sslmode=%s password=%s",
 		cfg.Postgres.Host,
