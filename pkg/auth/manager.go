@@ -1,7 +1,6 @@
 package auth
 
 import (
-	"errors"
 	"fmt"
 	"math/rand"
 	"time"
@@ -22,12 +21,12 @@ type manager struct {
 	signingKey string
 }
 
-func NewManager(signingKey string) (*manager, error) {
+func NewTokenManager(signingKey string) (*manager, error) {
 
-	const op = "auth.TokenManager.Parse"
+	const op = "auth.NewTokenManager.Parse"
 
 	if signingKey == "" {
-		return nil, errors.New("empty signing key")
+		return nil, fmt.Errorf("%s: empty signing key", op)
 	}
 
 	return &manager{signingKey: signingKey}, nil
@@ -49,7 +48,7 @@ func (m *manager) Parse(accessToken string) (string, error) {
 
 	token, err := jwt.Parse(accessToken, func(token *jwt.Token) (i interface{}, err error) {
 		if _, ok := token.Method.(*jwt.SigningMethodHMAC); !ok {
-			return nil, fmt.Errorf("unexpected signing method: %v", token.Header["alg"])
+			return nil, fmt.Errorf("%s: unexpected signing method: %v", op, token.Header["alg"])
 		}
 
 		return []byte(m.signingKey), nil
@@ -61,7 +60,7 @@ func (m *manager) Parse(accessToken string) (string, error) {
 
 	claims, ok := token.Claims.(jwt.MapClaims)
 	if !ok {
-		return "", fmt.Errorf("error get user claims from token")
+		return "", fmt.Errorf("%s: error get user claims from token", op)
 	}
 
 	return claims["sub"].(string), nil
