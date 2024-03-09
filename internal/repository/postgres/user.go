@@ -47,15 +47,15 @@ func (u *usersRepository) Add(ctx context.Context, user model.User) (string, err
 	return id, nil
 }
 
-// GetByCredentials fetch a user by its email and password from the repository
-func (u *usersRepository) GetByCredentials(ctx context.Context, email, password string) (model.User, error) {
+// GetByCredentials fetch a user by its email from the repository
+func (u *usersRepository) GetByEmail(ctx context.Context, email string) (model.User, error) {
 
-	const op = "postgres.userRepository.GetByCredentials"
+	const op = "postgres.userRepository.GetByEmail"
 
 	var user model.User
-	query := fmt.Sprintf("SELECT * FROM %s WHERE email=$1 AND password_hash=$2", usersTable)
+	query := fmt.Sprintf("SELECT * FROM %s WHERE email=$1", usersTable)
 
-	if err := u.db.Get(&user, query, email, password); err != nil {
+	if err := u.db.Get(&user, query, email); err != nil {
 
 		if errors.Is(err, sql.ErrNoRows) {
 			return model.User{}, fmt.Errorf("%s: %w", op, repository.ErrUserNotFound)
