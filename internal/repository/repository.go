@@ -17,7 +17,7 @@ var (
 // Users users repository interface
 type Users interface {
 	Add(ctx context.Context, user model.User) (string, error)
-	GetByCredentials(ctx context.Context, email, password string) (model.User, error)
+	GetByEmail(ctx context.Context, email string) (model.User, error)
 	IsAdmin(ctx context.Context, userID string) (bool, error)
 }
 
