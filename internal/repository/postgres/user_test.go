@@ -86,7 +86,7 @@ func TestUser_Add(t *testing.T) {
 	}
 }
 
-func TestUser_GetByCredentials(t *testing.T) {
+func TestUser_GetByEmail(t *testing.T) {
 
 	db, mock, err := sqlmock.New()
 	if err != nil {
@@ -99,8 +99,8 @@ func TestUser_GetByCredentials(t *testing.T) {
 
 	type test struct {
 		name            string
-		mockBehavior    func(model.Credentials, model.User)
-		input           model.Credentials
+		mockBehavior    func(string, model.User)
+		input           string
 		expected        model.User
 		isExpectedError bool
 	}
@@ -110,16 +110,13 @@ func TestUser_GetByCredentials(t *testing.T) {
 	tests := []test{
 		{
 			name: "Success",
-			mockBehavior: func(cred model.Credentials, user model.User) {
+			mockBehavior: func(email string, user model.User) {
 				rows := sqlmock.NewRows([]string{"id", "email", "password_hash", "is_admin"})
-				rows.AddRow(user.ID, cred.Email, cred.Password, user.IsAdmin)
+				rows.AddRow(user.ID, email, password, user.IsAdmin)
 				query := fmt.Sprintf("SELECT (.+) FROM %s", usersTable)
-				mock.ExpectQuery(query).WithArgs(cred.Email, cred.Password).WillReturnRows(rows)
+				mock.ExpectQuery(query).WithArgs(email).WillReturnRows(rows)
 			},
-			input: model.Credentials{
-				Email:    email,
-				Password: password,
-			},
+			input: email,
 			expected: model.User{
 				Email:    email,
 				Password: password,
@@ -128,17 +125,17 @@ func TestUser_GetByCredentials(t *testing.T) {
 		},
 		{
 			name: "User not found error",
-			mockBehavior: func(cred model.Credentials, user model.User) {
+			mockBehavior: func(email string, user model.User) {
 				query := fmt.Sprintf("SELECT (.+) FROM %s", usersTable)
-				mock.ExpectQuery(query).WithArgs(cred.Email, cred.Password).WillReturnError(sql.ErrNoRows)
+				mock.ExpectQuery(query).WithArgs(email).WillReturnError(sql.ErrNoRows)
 			},
 			isExpectedError: true,
 		},
 		{
 			name: "Unknown error",
-			mockBehavior: func(cred model.Credentials, user model.User) {
+			mockBehavior: func(email string, user model.User) {
 				query := fmt.Sprintf("SELECT (.+) FROM %s", usersTable)
-				mock.ExpectQuery(query).WithArgs(cred.Email, cred.Password).WillReturnError(fmt.Errorf("some error"))
+				mock.ExpectQuery(query).WithArgs(email).WillReturnError(fmt.Errorf("some error"))
 			},
 			isExpectedError: true,
 		},
@@ -149,7 +146,7 @@ func TestUser_GetByCredentials(t *testing.T) {
 
 			test.mockBehavior(test.input, test.expected)
 
-			actual, err := usersRepository.GetByCredentials(context.TODO(), test.input.Email, test.input.Password)
+			actual, err := usersRepository.GetByEmail(context.TODO(), test.input)
 			if test.isExpectedError {
 				assert.Error(t, err)
 			} else {
