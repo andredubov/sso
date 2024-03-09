@@ -14,7 +14,7 @@ import (
 // TokenManager provides logic for JWT & Refresh tokens generation and parsing.
 type TokenManager interface {
 	NewJWT(user model.User, app model.App, ttl time.Duration) (string, error)
-	Parse(accessToken string) (string, error)
+	Parse(accessToken string) (model.User, model.App, error)
 	NewRefreshToken() (string, error)
 }
 
@@ -22,7 +22,7 @@ type manager struct {
 	signingKey string
 }
 
-func NewTokenManager(signingKey string) (*manager, error) {
+func NewTokenManager(signingKey string) (TokenManager, error) {
 
 	const op = "auth.NewTokenManager"
 
