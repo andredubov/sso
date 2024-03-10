@@ -21,7 +21,7 @@ type appsRepository struct {
 }
 
 // NewAppsRepository create an instance of the appsRepository
-func NewAppsRepository(db *sqlx.DB) *appsRepository {
+func NewAppsRepository(db *sqlx.DB) repository.Apps {
 	return &appsRepository{
 		db: db,
 	}
