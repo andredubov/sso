@@ -21,7 +21,7 @@ type usersRepository struct {
 }
 
 // NewUsersRepository create an instance of the usersRepository
-func NewUsersRepository(db *sqlx.DB) *usersRepository {
+func NewUsersRepository(db *sqlx.DB) repository.Users {
 	return &usersRepository{
 		db: db,
 	}
