@@ -39,6 +39,9 @@ ifneq ($(strip $(IS_SSO_DATABASE_EXITED)),)
 	docker rm $(IS_SSO_DATABASE_EXITED)
 endif
 
+gen-mocks:
+	go generate ./...
+
 cover:
 	mkdir -p ./.cover
 	go test -v -coverprofile ./.cover/cover.out ./...
