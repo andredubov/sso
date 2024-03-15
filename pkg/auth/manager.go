@@ -22,6 +22,7 @@ type manager struct {
 	signingKey string
 }
 
+// NewTokenManager create an instance of manager
 func NewTokenManager(signingKey string) (TokenManager, error) {
 
 	const op = "auth.NewTokenManager"
