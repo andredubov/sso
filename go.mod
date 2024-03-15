@@ -8,6 +8,7 @@ require (
 	github.com/andredubov/protos/v2 v2.0.0
 	github.com/dgrijalva/jwt-go v3.2.0+incompatible
 	github.com/dvln/testify v0.0.0-20161024040450-c9680faee19e
+	github.com/golang/mock v1.6.0
 	github.com/ilyakaznacheev/cleanenv v1.5.0
 	github.com/jmoiron/sqlx v1.3.5
 	github.com/lib/pq v1.10.9
