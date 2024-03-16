@@ -14,6 +14,8 @@ import (
 
 var (
 	ErrInvalidCredentials = errors.New("invalid credentials")
+	ErrUserNotFound       = errors.New("user not found")
+	ErrUserExists         = errors.New("user already exists")
 )
 
 type authService struct {
@@ -68,6 +70,9 @@ func (a *authService) SignIn(ctx context.Context, email, password, appID string)
 
 	app, err := a.repository.Apps.GetByID(ctx, appID)
 	if err != nil {
+		if errors.Is(err, repository.ErrAppNotFound) {
+			return "", fmt.Errorf("%s: %w", op, ErrInvalidCredentials)
+		}
 		return "", fmt.Errorf("%s: %w", op, err)
 	}
 
@@ -86,6 +91,9 @@ func (a *authService) IsAdmin(ctx context.Context, userID string) (bool, error) 
 
 	isAdmin, err := a.repository.Users.IsAdmin(ctx, userID)
 	if err != nil {
+		if errors.Is(err, repository.ErrUserNotFound) {
+			return false, fmt.Errorf("%s: %w", op, ErrUserNotFound)
+		}
 		return false, fmt.Errorf("%s: %w", op, err)
 	}
 
