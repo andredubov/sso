@@ -37,13 +37,13 @@ var (
 
 type (
 	Config struct {
-		Enviroment string         `yaml:"env" env:"APP_ENV" env-default:"local"`
-		Postgres   PostgresConfig `yaml:"postgres"`
-		GRPC       GRPCConfig     `yaml:"grpc"`
-		Auth       AuthConfig     `yaml:"auth"`
+		Enviroment string   `yaml:"env" env:"APP_ENV" env-default:"local"`
+		Postgres   Postgres `yaml:"postgres"`
+		GRPC       GRPC     `yaml:"grpc"`
+		Auth       Auth     `yaml:"auth"`
 	}
 
-	PostgresConfig struct {
+	Postgres struct {
 		Host         string `yaml:"host" env:"DB_HOST"`
 		Port         int    `yaml:"port" env:"DB_PORT"`
 		Username     string `yaml:"username" env:"DB_USER"`
@@ -52,18 +52,18 @@ type (
 		SSLMode      string `yaml:"sslmode" env:"DB_SSL_MODE"`
 	}
 
-	GRPCConfig struct {
+	GRPC struct {
 		Host    string        `yaml:"host" env:"GRPC_HOST"`
 		Port    int           `yaml:"port" env:"GRPC_PORT"`
 		Timeout time.Duration `yaml:"timeout" env:"GRPC_TIMEOUT"`
 	}
 
-	AuthConfig struct {
-		JWT          JWTConfig `yaml:"jwt"`
-		PasswordSalt string    `yaml:"passwordSalt" env:"PASSWORD_SALT"`
+	Auth struct {
+		JWT          JWT    `yaml:"jwt"`
+		PasswordSalt string `yaml:"passwordSalt" env:"PASSWORD_SALT"`
 	}
 
-	JWTConfig struct {
+	JWT struct {
 		AccessTokenTTL  time.Duration `yaml:"accessTokenTTL" env:"JWT_ACCESS_TOKEN_TTL"`
 		RefreshTokenTTL time.Duration `yaml:"refreshTokenTTL" env:"JWT_REFRESH_TOKEN_TTL"`
 		SigningKey      string        `yaml:"signinKey" env:"JWT_SIGNING_KEY"`

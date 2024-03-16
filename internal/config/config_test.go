@@ -37,7 +37,7 @@ func TestMain(t *testing.T) {
 			},
 			expectedConfig: &config.Config{
 				Enviroment: "local",
-				Postgres: config.PostgresConfig{
+				Postgres: config.Postgres{
 					Host:         "localhost",
 					Port:         1234,
 					Username:     "postgres_23",
@@ -45,14 +45,14 @@ func TestMain(t *testing.T) {
 					DatabaseName: "postgres_456",
 					SSLMode:      "disable",
 				},
-				GRPC: config.GRPCConfig{
+				GRPC: config.GRPC{
 					Host:    "localhost",
 					Port:    80,
 					Timeout: time.Second * 7,
 				},
-				Auth: config.AuthConfig{
+				Auth: config.Auth{
 					PasswordSalt: "salt_salt",
-					JWT: config.JWTConfig{
+					JWT: config.JWT{
 						RefreshTokenTTL: time.Minute * 30,
 						AccessTokenTTL:  time.Minute * 15,
 						SigningKey:      "keysss",
