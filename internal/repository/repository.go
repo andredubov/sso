@@ -14,6 +14,8 @@ var (
 	ErrAppNotFound  = errors.New("app not found")
 )
 
+//go:generate mockgen -source=repository.go -destination=mocks/mock.go
+
 // Users users repository interface
 type Users interface {
 	Add(ctx context.Context, user model.User) (string, error)
