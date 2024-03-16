@@ -5,7 +5,6 @@ import (
 	"errors"
 
 	ssov2 "github.com/andredubov/protos/v2/gen/go/sso"
-	"github.com/andredubov/sso/internal/repository"
 	"github.com/andredubov/sso/internal/service"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
@@ -36,7 +35,7 @@ func (a *appsGRPCServer) Create(ctx context.Context, request *ssov2.CreateReques
 
 	id, err := a.appCreator.Create(ctx, request.AppName, request.AppSecret)
 	if err != nil {
-		if errors.Is(err, repository.ErrAppExists) {
+		if errors.Is(err, service.ErrAppExists) {
 			return nil, status.Error(codes.AlreadyExists, "application already exists")
 		}
 		return nil, status.Error(codes.Internal, "failed to create an application")
