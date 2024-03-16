@@ -6,7 +6,6 @@ import (
 
 	ssov2 "github.com/andredubov/protos/v2/gen/go/sso"
 	"github.com/andredubov/sso/internal/domain/model"
-	"github.com/andredubov/sso/internal/repository"
 	"github.com/andredubov/sso/internal/service"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
@@ -37,7 +36,7 @@ func (a *authGRPCServer) SignUp(ctx context.Context, request *ssov2.SignUpReques
 
 	id, err := a.auth.SignUp(ctx, model.User{Email: request.Email, Password: request.Password})
 	if err != nil {
-		if errors.Is(err, repository.ErrUserExists) {
+		if errors.Is(err, service.ErrUserExists) {
 			return nil, status.Error(codes.AlreadyExists, "user already exists")
 		}
 		return nil, status.Error(codes.Internal, "failed to register a user")
@@ -86,7 +85,7 @@ func (a *authGRPCServer) IsAdmin(ctx context.Context, request *ssov2.IsAdminRequ
 
 	isAdmin, err := a.auth.IsAdmin(ctx, request.UserId)
 	if err != nil {
-		if errors.Is(err, repository.ErrUserNotFound) {
+		if errors.Is(err, service.ErrUserNotFound) {
 			return nil, status.Error(codes.NotFound, "user not found")
 		}
 		return nil, status.Error(codes.Internal, "failed to check admin status")
