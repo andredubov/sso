@@ -20,11 +20,11 @@ var (
 type authService struct {
 	repository   *repository.Repository
 	tokenManager auth.TokenManager
-	jwtConfig    config.JWTConfig
+	jwtConfig    config.JWT
 }
 
 // NewAuthService create an instance of the authService struct
-func NewAuthService(repo *repository.Repository, manager auth.TokenManager, cfg config.JWTConfig) Auth {
+func NewAuthService(repo *repository.Repository, manager auth.TokenManager, cfg config.JWT) Auth {
 	return &authService{
 		repository:   repo,
 		tokenManager: manager,
@@ -32,7 +32,8 @@ func NewAuthService(repo *repository.Repository, manager auth.TokenManager, cfg 
 	}
 }
 
-// SignUp registers a new user
+// SignUp registers a new user in the system and returns user ID
+// If user with given email already exists return error
 func (a *authService) SignUp(ctx context.Context, user model.User) (string, error) {
 
 	const op = "authService.SignUp"
@@ -47,7 +48,9 @@ func (a *authService) SignUp(ctx context.Context, user model.User) (string, erro
 	return a.repository.Users.Add(ctx, user)
 }
 
-// SignIn a new user by its email and password in app by its id
+// SignIn checks if a user with given credentials exists in the system
+// If user exists, but password incorrect returns error
+// If user doesn't exist returns error
 func (a *authService) SignIn(ctx context.Context, email, password, appID string) (string, error) {
 
 	const op = "authService.SignIn"
@@ -77,7 +80,7 @@ func (a *authService) SignIn(ctx context.Context, email, password, appID string)
 	return token, err
 }
 
-// IsAdmin found out weather the user is an admin or no
+// IsAdmin checks if a user is admin
 func (a *authService) IsAdmin(ctx context.Context, userID string) (bool, error) {
 
 	const op = "authService.IsAdmin"
