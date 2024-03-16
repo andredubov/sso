@@ -16,14 +16,13 @@ var (
 	ErrInvalidCredentials = errors.New("invalid credentials")
 )
 
-// authService apps service entity
 type authService struct {
 	repository   *repository.Repository
 	tokenManager auth.TokenManager
 	jwtConfig    config.JWT
 }
 
-// NewAuthService create an instance of the authService struct
+// New returns a new instance of the auth service
 func NewAuthService(repo *repository.Repository, manager auth.TokenManager, cfg config.JWT) Auth {
 	return &authService{
 		repository:   repo,
