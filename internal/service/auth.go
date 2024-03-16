@@ -46,7 +46,15 @@ func (a *authService) SignUp(ctx context.Context, user model.User) (string, erro
 
 	user.Password = string(passwordHash)
 
-	return a.repository.Users.Add(ctx, user)
+	id, err := a.repository.Users.Add(ctx, user)
+	if err != nil {
+		if errors.Is(err, repository.ErrUserExists) {
+			return "", fmt.Errorf("%s: %w", op, ErrUserExists)
+		}
+		return "", fmt.Errorf("%s: %w", op, err)
+	}
+
+	return id, nil
 }
 
 // SignIn checks if a user with given credentials exists in the system
