@@ -50,7 +50,7 @@ func TestApp_Add(t *testing.T) {
 			isExpectedError: false,
 		},
 		{
-			name: "User already exsits",
+			name: "Application already exsits",
 			mockBehavior: func(app model.App) {
 				query := fmt.Sprintf("INSERT INTO %s ", appsTable)
 				errUniqueViolation := pq.Error{Code: "23505"}
@@ -124,7 +124,7 @@ func TestApp_GetByID(t *testing.T) {
 			isExpectedError: false,
 		},
 		{
-			name: "App not found error",
+			name: "Application not found error",
 			mockBehavior: func(appID string) {
 				query := fmt.Sprintf("SELECT (.+) FROM %s", appsTable)
 				mock.ExpectQuery(query).WithArgs(appID).WillReturnError(sql.ErrNoRows)
