@@ -14,15 +14,17 @@ import (
 
 type authGRPCServer struct {
 	ssov2.UnimplementedAuthServer
-	service *service.Service
+	auth service.Auth
 }
 
-func NewGRPCAuthServer(service *service.Service) ssov2.AuthServer {
+// NewGRPCAuthServer returns an instance of Auth grpc server
+func NewGRPCAuthServer(service service.Auth) ssov2.AuthServer {
 	return &authGRPCServer{
-		service: service,
+		auth: service,
 	}
 }
 
+// SignUp handles grpc request to register a user in the system and returns result in grpc response
 func (a *authGRPCServer) SignUp(ctx context.Context, request *ssov2.SignUpRequest) (*ssov2.SignUpResponse, error) {
 
 	if request.Email == "" {
@@ -33,7 +35,7 @@ func (a *authGRPCServer) SignUp(ctx context.Context, request *ssov2.SignUpReques
 		return nil, status.Error(codes.InvalidArgument, "password is required")
 	}
 
-	id, err := a.service.Auth.SignUp(ctx, model.User{Email: request.Email, Password: request.Password})
+	id, err := a.auth.SignUp(ctx, model.User{Email: request.Email, Password: request.Password})
 	if err != nil {
 		if errors.Is(err, repository.ErrUserExists) {
 			return nil, status.Error(codes.AlreadyExists, "user already exists")
@@ -44,6 +46,7 @@ func (a *authGRPCServer) SignUp(ctx context.Context, request *ssov2.SignUpReques
 	return &ssov2.SignUpResponse{UserId: id}, nil
 }
 
+// SignIn handles grpc request to sign a user in the system and returns result in grpc response
 func (a *authGRPCServer) SignIn(ctx context.Context, request *ssov2.SignInRequest) (*ssov2.SignInResponse, error) {
 	if request.GetEmail() == "" {
 		return nil, status.Error(codes.InvalidArgument, "email is required")
@@ -57,7 +60,7 @@ func (a *authGRPCServer) SignIn(ctx context.Context, request *ssov2.SignInReques
 		return nil, status.Error(codes.InvalidArgument, "app id is required")
 	}
 
-	token, err := a.service.Auth.SignIn(ctx, request.Email, request.Password, request.AppId)
+	token, err := a.auth.SignIn(ctx, request.Email, request.Password, request.AppId)
 	if err != nil {
 		if errors.Is(err, service.ErrInvalidCredentials) {
 			return nil, status.Error(codes.InvalidArgument, "invalid email or password")
@@ -68,18 +71,20 @@ func (a *authGRPCServer) SignIn(ctx context.Context, request *ssov2.SignInReques
 	return &ssov2.SignInResponse{Token: token}, nil
 }
 
+// SignOut handles grpc request to logout user from the system and returns result in grpc response
 func (a *authGRPCServer) SignOut(ctx context.Context, request *ssov2.SignOutRequest) (*ssov2.SignOutResponse, error) {
 
 	return nil, status.Errorf(codes.Unimplemented, "method SignOut not implemented")
 }
 
+// IsAdmin handles grpc request to check if a user is admin and then send checks result by grpc reponse
 func (a *authGRPCServer) IsAdmin(ctx context.Context, request *ssov2.IsAdminRequest) (*ssov2.IsAdminResponse, error) {
 
 	if request.UserId == "" {
 		return nil, status.Error(codes.InvalidArgument, "user id is required")
 	}
 
-	isAdmin, err := a.service.Auth.IsAdmin(ctx, request.UserId)
+	isAdmin, err := a.auth.IsAdmin(ctx, request.UserId)
 	if err != nil {
 		if errors.Is(err, repository.ErrUserNotFound) {
 			return nil, status.Error(codes.NotFound, "user not found")
