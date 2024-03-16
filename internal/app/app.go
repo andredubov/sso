@@ -9,7 +9,7 @@ import (
 	"github.com/andredubov/sso/internal/config"
 	"github.com/andredubov/sso/internal/repository/postgres"
 	"github.com/andredubov/sso/internal/service"
-	appsServer "github.com/andredubov/sso/internal/transport/grpc/app/v1"
+	appsServer "github.com/andredubov/sso/internal/transport/grpc/app/v2"
 	authserver "github.com/andredubov/sso/internal/transport/grpc/auth/v2"
 	"github.com/andredubov/sso/pkg/auth"
 	"github.com/andredubov/sso/pkg/database"
@@ -18,13 +18,19 @@ import (
 	"google.golang.org/grpc/reflection"
 )
 
+type Application interface {
+	Run() error
+	Stop()
+}
+
 type app struct {
 	grpcServer *grpc.Server
 	cfg        *config.Config
-	services   *service.Service
+	auth       service.Auth
+	appCreator service.AppCreator
 }
 
-func New() (*app, error) {
+func New() (Application, error) {
 
 	const op = "app.New"
 
@@ -95,7 +101,7 @@ func (a *app) initServices() error {
 
 	const op = "app.initServices"
 
-	db, err := database.NewPostgresConnection(a.cfg)
+	db, err := database.NewPostgresConnection(&a.cfg.Postgres)
 	if err != nil {
 		return fmt.Errorf("%s: %w", op, err)
 	}
@@ -107,7 +113,8 @@ func (a *app) initServices() error {
 		return fmt.Errorf("%s: %w", op, err)
 	}
 
-	a.services = service.New(repo, tokenManager, a.cfg.Auth.JWT)
+	a.auth = service.NewAuthService(repo, tokenManager, a.cfg.Auth.JWT)
+	a.appCreator = service.NewAppCreator(repo.Apps)
 
 	return nil
 }
@@ -123,8 +130,8 @@ func (a *app) initGRPCServer() error {
 
 	reflection.Register(a.grpcServer)
 
-	authServer := authserver.NewGRPCAuthServer(a.services)
-	appsServer := appsServer.NewGRPCAppsServer(a.services.AppCreator)
+	authServer := authserver.NewGRPCAuthServer(a.auth)
+	appsServer := appsServer.NewGRPCAppsServer(a.appCreator)
 
 	ssov2.RegisterAuthServer(a.grpcServer, authServer)
 	ssov2.RegisterAppsServer(a.grpcServer, appsServer)
