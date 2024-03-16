@@ -4,7 +4,6 @@ go 1.21.5
 
 require (
 	github.com/DATA-DOG/go-sqlmock v1.5.2
-	github.com/andredubov/protos v1.0.0
 	github.com/andredubov/protos/v2 v2.0.0
 	github.com/dgrijalva/jwt-go v3.2.0+incompatible
 	github.com/dvln/testify v0.0.0-20161024040450-c9680faee19e

@@ -2,8 +2,6 @@ github.com/BurntSushi/toml v1.2.1 h1:9F2/+DoOYIOksmaJFPw1tGFy1eDnIJXg+UHjuD8lTak
 github.com/BurntSushi/toml v1.2.1/go.mod h1:CxXYINrC8qIiEnFrOxCa7Jy5BFHlXnUU2pbicEuybxQ=
 github.com/DATA-DOG/go-sqlmock v1.5.2 h1:OcvFkGmslmlZibjAjaHm3L//6LiuBgolP7OputlJIzU=
 github.com/DATA-DOG/go-sqlmock v1.5.2/go.mod h1:88MAG/4G7SMwSE3CeA0ZKzrT5CiOU3OJ+JlNzwDqpNU=
-github.com/andredubov/protos v1.0.0 h1:7DZeST31QvFkQjO0wgDwTUefjbn2KAVmWecUAx3LJsI=
-github.com/andredubov/protos v1.0.0/go.mod h1:EHedIpHTJ8F0DzZODDZ38QFq3A1uaFy115ANthO2RI8=
 github.com/andredubov/protos/v2 v2.0.0 h1:gaPOcR+hp11wtOiMAZvDH5SZPZI0Ik8XEsNxMfAKG8Y=
 github.com/andredubov/protos/v2 v2.0.0/go.mod h1:cMuwpGR6I38Cvw0pCLN3u2XpJC5OAZz6bBKSwncBCFQ=
 github.com/davecgh/go-spew v1.1.0/go.mod h1:J7Y8YcW2NihsgmVo/mv3lAwl/skON4iLHjSsI+c5H38=

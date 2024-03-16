@@ -3,10 +3,7 @@ package service
 import (
 	"context"
 
-	"github.com/andredubov/sso/internal/config"
 	"github.com/andredubov/sso/internal/domain/model"
-	"github.com/andredubov/sso/internal/repository"
-	"github.com/andredubov/sso/pkg/auth"
 )
 
 type Auth interface {
@@ -17,16 +14,4 @@ type Auth interface {
 
 type AppCreator interface {
 	Create(ctx context.Context, name, secret string) (string, error)
-}
-
-type Service struct {
-	Auth       Auth
-	AppCreator AppCreator
-}
-
-func New(repo *repository.Repository, manager auth.TokenManager, cfg config.JWTConfig) *Service {
-	return &Service{
-		Auth:       NewAuthService(repo, manager, cfg),
-		AppCreator: NewAppCreator(repo.Apps),
-	}
 }
