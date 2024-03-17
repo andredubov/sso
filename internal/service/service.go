@@ -6,6 +6,8 @@ import (
 	"github.com/andredubov/sso/internal/domain/model"
 )
 
+//go:generate mockgen -source=service.go -destination=mocks/mock.go
+
 type Auth interface {
 	SignUp(ctx context.Context, user model.User) (string, error)
 	SignIn(ctx context.Context, email, password, appID string) (string, error)
