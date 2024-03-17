@@ -13,6 +13,8 @@ import (
 	authserver "github.com/andredubov/sso/internal/transport/grpc/auth/v2"
 	"github.com/andredubov/sso/pkg/auth"
 	"github.com/andredubov/sso/pkg/database"
+	"github.com/andredubov/sso/pkg/hash"
+	"golang.org/x/crypto/bcrypt"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials/insecure"
 	"google.golang.org/grpc/reflection"
@@ -106,14 +108,14 @@ func (a *app) initServices() error {
 		return fmt.Errorf("%s: %w", op, err)
 	}
 
-	repo := postgres.NewRepository(db)
+	repo, hasher := postgres.NewRepository(db), hash.NewCryptoHasher(bcrypt.DefaultCost)
 
 	tokenManager, err := auth.NewTokenManager(a.cfg.Auth.JWT.SigningKey)
 	if err != nil {
 		return fmt.Errorf("%s: %w", op, err)
 	}
 
-	a.auth = service.NewAuthService(repo, tokenManager, a.cfg.Auth.JWT)
+	a.auth = service.NewAuthService(repo, hasher, tokenManager, a.cfg.Auth.JWT)
 	a.appCreator = service.NewAppCreator(repo.Apps)
 
 	return nil
