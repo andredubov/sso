@@ -6,6 +6,7 @@ import (
 	"testing"
 
 	"github.com/andredubov/sso/internal/domain/model"
+	"github.com/andredubov/sso/internal/repository"
 	mock_repository "github.com/andredubov/sso/internal/repository/mocks"
 	"github.com/andredubov/sso/internal/service"
 	"github.com/dvln/testify/assert"
@@ -14,9 +15,16 @@ import (
 
 func TestApp_Create(t *testing.T) {
 
+	type MockBehavior func(
+		appsRepositiryMock *mock_repository.MockApps,
+		app model.App,
+		id string,
+		err error,
+	)
+
 	type test struct {
 		name            string
-		mockBehavior    func(*mock_repository.MockApps, model.App, string, error)
+		mockBehavior    MockBehavior
 		input           model.App
 		expected        string
 		expectedError   error
@@ -26,8 +34,13 @@ func TestApp_Create(t *testing.T) {
 	tests := []test{
 		{
 			name: "Success",
-			mockBehavior: func(repo *mock_repository.MockApps, app model.App, id string, err error) {
-				repo.EXPECT().Add(gomock.Any(), gomock.Eq(app)).Return(id, err).Times(1)
+			mockBehavior: func(
+				appsRepositoryMock *mock_repository.MockApps,
+				app model.App,
+				id string,
+				err error,
+			) {
+				appsRepositoryMock.EXPECT().Add(gomock.Any(), gomock.Eq(app)).Return(id, err).Times(1)
 			},
 			input: model.App{
 				Name:   "app-name",
@@ -39,21 +52,31 @@ func TestApp_Create(t *testing.T) {
 		},
 		{
 			name: "Application already exists",
-			mockBehavior: func(repo *mock_repository.MockApps, app model.App, id string, err error) {
-				repo.EXPECT().Add(gomock.Any(), gomock.Eq(app)).Return(id, err).Times(1)
+			mockBehavior: func(
+				appsRepositoryMock *mock_repository.MockApps,
+				app model.App,
+				id string,
+				err error,
+			) {
+				appsRepositoryMock.EXPECT().Add(gomock.Any(), gomock.Eq(app)).Return(id, err).Times(1)
 			},
 			input: model.App{
 				Name:   "app-name",
 				Secret: "app-secret",
 			},
 			expected:        "",
-			expectedError:   service.ErrAppExists,
+			expectedError:   repository.ErrAppExists,
 			isExpectedError: true,
 		},
 		{
 			name: "Unknown error",
-			mockBehavior: func(repo *mock_repository.MockApps, app model.App, id string, err error) {
-				repo.EXPECT().Add(gomock.Any(), gomock.Eq(app)).Return(id, err).Times(1)
+			mockBehavior: func(
+				appsRepositoryMock *mock_repository.MockApps,
+				app model.App,
+				id string,
+				err error,
+			) {
+				appsRepositoryMock.EXPECT().Add(gomock.Any(), gomock.Eq(app)).Return(id, err).Times(1)
 			},
 			input: model.App{
 				Name:   "app-name",
@@ -73,15 +96,25 @@ func TestApp_Create(t *testing.T) {
 			mockAppRepository := mock_repository.NewMockApps(ctrl)
 			appCreator := service.NewAppCreator(mockAppRepository)
 
-			test.mockBehavior(mockAppRepository, test.input, test.expected, test.expectedError)
+			test.mockBehavior(
+				mockAppRepository,
+				test.input,
+				test.expected,
+				test.expectedError,
+			)
 
-			actual, err := appCreator.Create(context.TODO(), test.input.Name, test.input.Secret)
+			actual, err := appCreator.Create(
+				context.TODO(),
+				test.input.Name,
+				test.input.Secret,
+			)
+
 			if test.isExpectedError {
 				assert.Error(t, err)
 			} else {
 				assert.NoError(t, err)
-				assert.Equal(t, test.expected, actual)
 			}
+			assert.Equal(t, test.expected, actual)
 		})
 	}
 }
