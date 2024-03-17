@@ -6,7 +6,6 @@ import (
 	"testing"
 
 	"github.com/andredubov/sso/internal/domain/model"
-	"github.com/andredubov/sso/internal/repository"
 	mock_repository "github.com/andredubov/sso/internal/repository/mocks"
 	"github.com/andredubov/sso/internal/service"
 	"github.com/dvln/testify/assert"
@@ -48,7 +47,7 @@ func TestApp_Create(t *testing.T) {
 				Secret: "app-secret",
 			},
 			expected:        "",
-			expectedError:   repository.ErrAppExists,
+			expectedError:   service.ErrAppExists,
 			isExpectedError: true,
 		},
 		{
