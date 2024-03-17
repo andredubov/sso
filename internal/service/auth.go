@@ -9,7 +9,7 @@ import (
 	"github.com/andredubov/sso/internal/domain/model"
 	"github.com/andredubov/sso/internal/repository"
 	"github.com/andredubov/sso/pkg/auth"
-	"golang.org/x/crypto/bcrypt"
+	"github.com/andredubov/sso/pkg/hash"
 )
 
 var (
@@ -19,32 +19,39 @@ var (
 )
 
 type authService struct {
-	repository   *repository.Repository
-	tokenManager auth.TokenManager
-	jwtConfig    config.JWT
+	repository     *repository.Repository
+	passwordHasher hash.PasswordHasher
+	tokenManager   auth.TokenManager
+	jwtConfig      config.JWT
 }
 
-// New returns a new instance of the auth service
-func NewAuthService(repo *repository.Repository, manager auth.TokenManager, cfg config.JWT) Auth {
+// New returns a new instance of the auth service.
+func NewAuthService(
+	repo *repository.Repository,
+	hasher hash.PasswordHasher,
+	manager auth.TokenManager,
+	cfg config.JWT,
+) Auth {
 	return &authService{
-		repository:   repo,
-		tokenManager: manager,
-		jwtConfig:    cfg,
+		repository:     repo,
+		passwordHasher: hasher,
+		tokenManager:   manager,
+		jwtConfig:      cfg,
 	}
 }
 
-// SignUp registers a new user in the system and returns user ID
+// SignUp registers a new user in the system and returns user ID.
 // If user with given email already exists return error
 func (a *authService) SignUp(ctx context.Context, user model.User) (string, error) {
 
 	const op = "authService.SignUp"
 
-	passwordHash, err := bcrypt.GenerateFromPassword([]byte(user.Password), bcrypt.DefaultCost)
+	passwordHash, err := a.passwordHasher.HashAndSalt(user.Password)
 	if err != nil {
 		return "", fmt.Errorf("%s: %w", op, err)
 	}
 
-	user.Password = string(passwordHash)
+	user.Password = passwordHash
 
 	id, err := a.repository.Users.Add(ctx, user)
 	if err != nil {
@@ -57,7 +64,7 @@ func (a *authService) SignUp(ctx context.Context, user model.User) (string, erro
 	return id, nil
 }
 
-// SignIn checks if a user with given credentials exists in the system
+// SignIn checks if a user with given credentials exists in the system.
 // If user exists, but password incorrect returns error
 // If user doesn't exist returns error
 func (a *authService) SignIn(ctx context.Context, email, password, appID string) (string, error) {
@@ -72,7 +79,8 @@ func (a *authService) SignIn(ctx context.Context, email, password, appID string)
 		return "", fmt.Errorf("%s: %w", op, err)
 	}
 
-	if err := bcrypt.CompareHashAndPassword([]byte(user.Password), []byte(password)); err != nil {
+	err = a.passwordHasher.ComparePasswords(user.Password, password)
+	if err != nil {
 		return "", fmt.Errorf("%s: %w", op, ErrInvalidCredentials)
 	}
 
@@ -92,7 +100,7 @@ func (a *authService) SignIn(ctx context.Context, email, password, appID string)
 	return token, err
 }
 
-// IsAdmin checks if a user is admin
+// IsAdmin checks if a user is admin.
 func (a *authService) IsAdmin(ctx context.Context, userID string) (bool, error) {
 
 	const op = "authService.IsAdmin"
