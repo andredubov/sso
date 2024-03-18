@@ -47,6 +47,7 @@ func (a *authGRPCServer) SignUp(ctx context.Context, request *ssov2.SignUpReques
 
 // SignIn handles grpc request to sign a user in the system and returns result in grpc response
 func (a *authGRPCServer) SignIn(ctx context.Context, request *ssov2.SignInRequest) (*ssov2.SignInResponse, error) {
+
 	if request.GetEmail() == "" {
 		return nil, status.Error(codes.InvalidArgument, "email is required")
 	}
