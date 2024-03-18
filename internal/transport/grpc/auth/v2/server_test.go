@@ -2,6 +2,7 @@ package server_test
 
 import (
 	"context"
+	"fmt"
 	"log"
 	"net"
 	"testing"
@@ -25,7 +26,7 @@ func TestAuthGRPCServer_SignUp(t *testing.T) {
 
 	type MockBehavior func(
 		userCreatorMock *mock_service.MockAuth,
-		app model.User,
+		user model.User,
 		response *ssov2.SignUpResponse,
 		err error,
 	)
@@ -196,6 +197,253 @@ func TestAuthGRPCServer_SignUp(t *testing.T) {
 			} else {
 				assert.NoError(t, err)
 				assert.Equal(t, test.expected.UserId, actual.UserId)
+			}
+		})
+	}
+}
+
+func TestAuthGRPCServer_SignIn(t *testing.T) {
+
+	type MockBehavior func(
+		userCreatorMock *mock_service.MockAuth,
+		credentials model.Credentials,
+		response *ssov2.SignInResponse,
+		err error,
+	)
+
+	type test struct {
+		name            string
+		mockBehavior    MockBehavior
+		input           model.Credentials
+		expected        *ssov2.SignInResponse
+		expectedError   error
+		isExpectedError bool
+	}
+
+	tests := []test{
+		{
+			name: "Success",
+			mockBehavior: func(
+				authCreatorMock *mock_service.MockAuth,
+				cred model.Credentials,
+				response *ssov2.SignInResponse,
+				err error,
+			) {
+				authCreatorMock.EXPECT().SignIn(
+					gomock.Any(),
+					gomock.Eq(cred.Email),
+					gomock.Eq(cred.Password),
+					gomock.Eq(cred.AppID),
+				).Return("token", err).Times(1)
+			},
+			input: model.Credentials{
+				Email:    "user-name",
+				Password: "user-secret",
+				AppID:    "app-uuid",
+			},
+			expected:        &ssov2.SignInResponse{Token: "token"},
+			expectedError:   nil,
+			isExpectedError: false,
+		},
+		{
+			name: "Invalid credentials",
+			mockBehavior: func(
+				authCreatorMock *mock_service.MockAuth,
+				cred model.Credentials,
+				response *ssov2.SignInResponse,
+				err error,
+			) {
+				authCreatorMock.EXPECT().SignIn(
+					gomock.Any(),
+					gomock.Eq(cred.Email),
+					gomock.Eq(cred.Password),
+					gomock.Eq(cred.AppID),
+				).Return("", err).Times(1)
+			},
+			input: model.Credentials{
+				Email:    "user-name",
+				Password: "user-secret",
+				AppID:    "app-uuid",
+			},
+			expected:        nil,
+			expectedError:   service.ErrInvalidCredentials,
+			isExpectedError: true,
+		},
+		{
+			name: "Unknown error",
+			mockBehavior: func(
+				authCreatorMock *mock_service.MockAuth,
+				cred model.Credentials,
+				response *ssov2.SignInResponse,
+				err error,
+			) {
+				authCreatorMock.EXPECT().SignIn(
+					gomock.Any(),
+					gomock.Eq(cred.Email),
+					gomock.Eq(cred.Password),
+					gomock.Eq(cred.AppID),
+				).Return("", err).Times(1)
+			},
+			input: model.Credentials{
+				Email:    "user-name",
+				Password: "user-secret",
+				AppID:    "app-uuid",
+			},
+			expected:        nil,
+			expectedError:   fmt.Errorf("some error"),
+			isExpectedError: true,
+		},
+		{
+			name: "Unknown error",
+			mockBehavior: func(
+				authCreatorMock *mock_service.MockAuth,
+				cred model.Credentials,
+				response *ssov2.SignInResponse,
+				err error,
+			) {
+				authCreatorMock.EXPECT().SignIn(
+					gomock.Any(),
+					gomock.Eq(cred.Email),
+					gomock.Eq(cred.Password),
+					gomock.Eq(cred.AppID),
+				).Return("", err).Times(1)
+			},
+			input: model.Credentials{
+				Email:    "user-name",
+				Password: "user-secret",
+				AppID:    "app-uuid",
+			},
+			expected:        nil,
+			expectedError:   status.Error(codes.Internal, "failed to login"),
+			isExpectedError: true,
+		},
+		{
+			name: "Empty credential email",
+			mockBehavior: func(
+				authCreatorMock *mock_service.MockAuth,
+				cred model.Credentials,
+				response *ssov2.SignInResponse,
+				err error,
+			) {
+
+			},
+			input: model.Credentials{
+				Email:    "",
+				Password: "user-secret",
+				AppID:    "app-uuid",
+			},
+			expected:        nil,
+			expectedError:   status.Error(codes.InvalidArgument, "email is required"),
+			isExpectedError: true,
+		},
+		{
+			name: "Empty credential password",
+			mockBehavior: func(
+				authCreatorMock *mock_service.MockAuth,
+				cred model.Credentials,
+				response *ssov2.SignInResponse,
+				err error,
+			) {
+
+			},
+			input: model.Credentials{
+				Email:    "user-name",
+				Password: "",
+				AppID:    "app-uuid",
+			},
+			expected:        nil,
+			expectedError:   status.Error(codes.InvalidArgument, "password is required"),
+			isExpectedError: true,
+		},
+		{
+			name: "Empty credential application id",
+			mockBehavior: func(
+				authCreatorMock *mock_service.MockAuth,
+				cred model.Credentials,
+				response *ssov2.SignInResponse,
+				err error,
+			) {
+
+			},
+			input: model.Credentials{
+				Email:    "user-name",
+				Password: "user-secret",
+				AppID:    "",
+			},
+			expected:        nil,
+			expectedError:   status.Error(codes.InvalidArgument, "app id is required"),
+			isExpectedError: true,
+		},
+	}
+
+	for _, test := range tests {
+		t.Run(test.name, func(t *testing.T) {
+			listener := bufconn.Listen(1024 * 1024)
+			t.Cleanup(func() {
+				listener.Close()
+			})
+
+			srv := grpc.NewServer(grpc.Creds(insecure.NewCredentials()))
+			t.Cleanup(func() {
+				srv.Stop()
+			})
+
+			ctrl := gomock.NewController(t)
+			t.Cleanup(func() {
+				defer ctrl.Finish()
+			})
+
+			authServiceMock := mock_service.NewMockAuth(ctrl)
+			authServer := server.NewGRPCAuthServer(authServiceMock)
+			ssov2.RegisterAuthServer(srv, authServer)
+
+			go func() {
+				if err := srv.Serve(listener); err != nil {
+					log.Fatalf("srv.Serve %v", err)
+				}
+			}()
+
+			dialer := func(context.Context, string) (net.Conn, error) {
+				return listener.Dial()
+			}
+
+			ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
+			t.Cleanup(func() {
+				cancel()
+			})
+
+			opts := []grpc.DialOption{
+				grpc.WithContextDialer(dialer),
+				grpc.WithTransportCredentials(insecure.NewCredentials()),
+			}
+
+			conn, err := grpc.DialContext(ctx, "", opts...)
+			t.Cleanup(func() {
+				conn.Close()
+			})
+			if err != nil {
+				t.Fatalf("grpc.DialContext %v", err)
+			}
+
+			test.mockBehavior(authServiceMock, test.input, test.expected, test.expectedError)
+
+			client := ssov2.NewAuthClient(conn)
+
+			actual, err := client.SignIn(
+				context.TODO(),
+				&ssov2.SignInRequest{
+					Email:    test.input.Email,
+					Password: test.input.Password,
+					AppId:    test.input.AppID,
+				},
+			)
+
+			if test.isExpectedError {
+				assert.Error(t, err)
+				assert.Equal(t, test.expected, actual)
+			} else {
+				assert.NoError(t, err)
+				assert.Equal(t, test.expected.Token, actual.Token)
 			}
 		})
 	}
