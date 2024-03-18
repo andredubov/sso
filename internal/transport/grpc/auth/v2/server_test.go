@@ -448,3 +448,162 @@ func TestAuthGRPCServer_SignIn(t *testing.T) {
 		})
 	}
 }
+
+func TestAuthGRPCServer_IsAdmin(t *testing.T) {
+
+	type MockBehavior func(
+		userCreatorMock *mock_service.MockAuth,
+		userID string,
+		response *ssov2.IsAdminResponse,
+		err error,
+	)
+
+	type test struct {
+		name            string
+		mockBehavior    MockBehavior
+		input           string
+		expected        *ssov2.IsAdminResponse
+		expectedError   error
+		isExpectedError bool
+	}
+
+	tests := []test{
+		{
+			name: "Success",
+			mockBehavior: func(
+				authCreatorMock *mock_service.MockAuth,
+				userID string,
+				response *ssov2.IsAdminResponse,
+				err error,
+			) {
+				authCreatorMock.EXPECT().IsAdmin(
+					gomock.Any(),
+					gomock.Eq(userID),
+				).Return(true, err).Times(1)
+			},
+			input:           "user-uuid",
+			expected:        &ssov2.IsAdminResponse{IsAdmin: true},
+			expectedError:   nil,
+			isExpectedError: false,
+		},
+		{
+			name: "User not found",
+			mockBehavior: func(
+				authCreatorMock *mock_service.MockAuth,
+				userID string,
+				response *ssov2.IsAdminResponse,
+				err error,
+			) {
+				authCreatorMock.EXPECT().IsAdmin(
+					gomock.Any(),
+					gomock.Eq(userID),
+				).Return(false, err).Times(1)
+			},
+			input:           "user-uuid",
+			expected:        nil,
+			expectedError:   service.ErrUserNotFound,
+			isExpectedError: true,
+		},
+		{
+			name: "Unknown error",
+			mockBehavior: func(
+				authCreatorMock *mock_service.MockAuth,
+				userID string,
+				response *ssov2.IsAdminResponse,
+				err error,
+			) {
+				authCreatorMock.EXPECT().IsAdmin(
+					gomock.Any(),
+					gomock.Eq(userID),
+				).Return(false, err).Times(1)
+			},
+			input:           "user-uuid",
+			expected:        nil,
+			expectedError:   status.Error(codes.Internal, "failed to check admin status"),
+			isExpectedError: true,
+		},
+		{
+			name: "User id is empty",
+			mockBehavior: func(
+				authCreatorMock *mock_service.MockAuth,
+				userID string,
+				response *ssov2.IsAdminResponse,
+				err error,
+			) {
+
+			},
+			input:           "",
+			expected:        nil,
+			expectedError:   status.Error(codes.InvalidArgument, "user id is required"),
+			isExpectedError: true,
+		},
+	}
+
+	for _, test := range tests {
+		t.Run(test.name, func(t *testing.T) {
+			listener := bufconn.Listen(1024 * 1024)
+			t.Cleanup(func() {
+				listener.Close()
+			})
+
+			srv := grpc.NewServer(grpc.Creds(insecure.NewCredentials()))
+			t.Cleanup(func() {
+				srv.Stop()
+			})
+
+			ctrl := gomock.NewController(t)
+			t.Cleanup(func() {
+				defer ctrl.Finish()
+			})
+
+			authServiceMock := mock_service.NewMockAuth(ctrl)
+			authServer := server.NewGRPCAuthServer(authServiceMock)
+			ssov2.RegisterAuthServer(srv, authServer)
+
+			go func() {
+				if err := srv.Serve(listener); err != nil {
+					log.Fatalf("srv.Serve %v", err)
+				}
+			}()
+
+			dialer := func(context.Context, string) (net.Conn, error) {
+				return listener.Dial()
+			}
+
+			ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
+			t.Cleanup(func() {
+				cancel()
+			})
+
+			opts := []grpc.DialOption{
+				grpc.WithContextDialer(dialer),
+				grpc.WithTransportCredentials(insecure.NewCredentials()),
+			}
+
+			conn, err := grpc.DialContext(ctx, "", opts...)
+			t.Cleanup(func() {
+				conn.Close()
+			})
+			if err != nil {
+				t.Fatalf("grpc.DialContext %v", err)
+			}
+
+			test.mockBehavior(authServiceMock, test.input, test.expected, test.expectedError)
+
+			client := ssov2.NewAuthClient(conn)
+
+			actual, err := client.IsAdmin(
+				context.TODO(),
+				&ssov2.IsAdminRequest{UserId: test.input},
+			)
+
+			if test.isExpectedError {
+				assert.Error(t, err)
+				assert.Equal(t, test.expected, actual)
+			} else {
+				assert.NoError(t, err)
+				assert.Equal(t, test.expected.IsAdmin, actual.IsAdmin)
+			}
+		})
+	}
+}
