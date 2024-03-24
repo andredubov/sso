@@ -18,13 +18,9 @@ func NewSHA1Hasher(salt string) PasswordHasher {
 // HashAndSalt returns the sha1 hash of the password at the given salt.
 func (h *sha1Hasher) HashAndSalt(password string) (string, error) {
 
-	const op = "sha1Hasher.HashAndSalt"
-
 	hash := sha1.New()
 
-	if _, err := hash.Write([]byte(password)); err != nil {
-		return "", fmt.Errorf("%s: %w", op, err)
-	}
+	hash.Write([]byte(password))
 
 	return fmt.Sprintf("%x", hash.Sum([]byte(h.salt))), nil
 }
@@ -34,13 +30,10 @@ func (h *sha1Hasher) ComparePasswords(hashedPassword string, plainPassword strin
 
 	const op = "sha1Hasher.ComparePasswords"
 
-	passwordHash, err := h.HashAndSalt(plainPassword)
-	if err != nil {
-		return fmt.Errorf("%s: %w", op, err)
-	}
+	passwordHash, _ := h.HashAndSalt(plainPassword)
 
 	if passwordHash != hashedPassword {
-		return fmt.Errorf("%s: %w", op, err)
+		return fmt.Errorf("%s: hashed password and plain password don't match", op)
 	}
 
 	return nil
