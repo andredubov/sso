@@ -71,12 +71,6 @@ func (a *authGRPCServer) SignIn(ctx context.Context, request *ssov2.SignInReques
 	return &ssov2.SignInResponse{Token: token}, nil
 }
 
-// SignOut handles grpc request to logout user from the system and returns result in grpc response
-func (a *authGRPCServer) SignOut(ctx context.Context, request *ssov2.SignOutRequest) (*ssov2.SignOutResponse, error) {
-
-	return nil, status.Errorf(codes.Unimplemented, "method SignOut not implemented")
-}
-
 // IsAdmin handles grpc request to check if a user is admin and then send checks result by grpc reponse
 func (a *authGRPCServer) IsAdmin(ctx context.Context, request *ssov2.IsAdminRequest) (*ssov2.IsAdminResponse, error) {
 
